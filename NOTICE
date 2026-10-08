@@ -1,0 +1,13 @@
+Reflex-2
+Copyright 2026 suzuki_shoten
+
+Reflex-2 uses Google EmbeddingGemma 2 (https://huggingface.co/google/embeddinggemma-2),
+licensed under the Apache License 2.0, as its base model. The base model's weights are not modified.
+Reflex-2 is not affiliated with or endorsed by Google.
+
+The fall-detection head (heads/fall.json) was trained by suzuki_shoten on GMDCSA24
+(https://github.com/ekramalam/GMDCSA24-A-Dataset-for-Human-Fall-Detection-in-Videos),
+licensed under the MIT License. The demo videos in media/ use clips from GMDCSA24.
+
+The surveillance comparison image in media/ uses two frames from UCF-Crime
+(Sultani, Chen and Shah, CVPR 2018), shown for research comparison; the face is pixelated.

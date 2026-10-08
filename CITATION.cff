@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use Reflex-2, please cite it as below."
+title: "Reflex-2: fast, local judgments on video with a 740M open embedding model"
+type: software
+authors:
+  - family-names: Suzuki
+    given-names: Gosuke
+    affiliation: Suzuki Shoten
+version: 1.0.0
+date-released: 2026-10-09
+license: Apache-2.0
+repository-code: "https://github.com/matu79go/reflex-2"
+url: "https://huggingface.co/matu79go/Reflex-2"
+abstract: >-
+  Reflex-2 judges camera video, images and audio on local hardware. It embeds a clip
+  into one vector with Google EmbeddingGemma 2 (740M parameters, unmodified) and reads
+  that vector with small logistic-regression heads trained from labelled examples in
+  seconds. On fall detection (GMDCSA24, leave-one-person-out) it reaches 95.7% balanced
+  accuracy at 0.3 s per clip on one GPU; on the same 40 clips it scores 97.5% against
+  85.0% for Gemini 3.8 Flash, which takes 6.95 s per clip through its API.
+keywords:
+  - video classification
+  - fall detection
+  - embedding model
+  - edge AI
+  - Gemma

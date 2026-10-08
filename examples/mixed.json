@@ -1,0 +1,4 @@
+{"video": "clip.mp4",
+ "questions": {"fall": {"type": "choice", "head": "fall"},
+               "room": {"type": "choice", "instructions": "Where is this?",
+                        "criteria": {"bedroom": "a bedroom", "kitchen": "a kitchen", "office": "an office"}}}}
