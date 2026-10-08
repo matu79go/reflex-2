@@ -11,3 +11,8 @@ licensed under the MIT License. The demo videos in media/ use clips from GMDCSA2
 
 The surveillance comparison image in media/ uses two frames from UCF-Crime
 (Sultani, Chen and Shah, CVPR 2018), shown for research comparison; the face is pixelated.
+
+The sound demo (media/audio_en.mp4, media/audio_en.gif, media/ja/audio_ja.gif) contains clips from ESC-50
+(Piczak, ACM Multimedia 2015, https://github.com/karolpiczak/ESC-50), licensed under CC BY-NC 3.0.
+These media files are shared for non-commercial demonstration under that license; they are not covered by
+the Apache License 2.0 of the code.

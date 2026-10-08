@@ -1,66 +1,75 @@
 # Reflex-2
 
-**Fast, local judgments on video. 740M parameters, one GPU, no cloud.**
+**Google EmbeddingGemma 2, improved into a video judgment model that runs on phones. Judges video at Jev speed with frontier-LLM-level accuracy or better.**
 
-Reflex-2 judges camera video, images and audio on your own hardware. It turns a clip into one vector with Google [EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2) and reads that vector with a small head trained from your examples:
+[EmbeddingGemma 2](https://blog.google/innovation-and-ai/technology/developers-tools/embeddinggemma-2/) (Google, Apache 2.0, 740M parameters) turns text, images, video and audio into one vector. It is a search model: as is, it cannot judge whether a clip shows a fall. Reflex-2 turns it into a judgment model by training a small head from examples, so it can tell, on the device, the moment something happens:
 
-- **Fall detection**: 95.7% on people the head never saw, 0.3 s per clip on one GPU. A ready-made head ships in `heads/fall.json`.
-- **Faster than a frontier LLM, at the same or better accuracy.** On the same clips, Gemini 3.8 Flash takes 7 to 16 s per clip through its API.
-- **Your own judgment in seconds.** Give a few dozen labelled clips; `train_head()` fits a head in seconds on a CPU. The base model is never modified.
-- **Video stays on the device.** Nothing is sent to a cloud service.
+- **Falls**: caught 1.2 to 2.1 s after the person falls, while Gemini 3.8 Flash takes 8.3 s or misses it. 0.28 s per judgment on one GPU.
+- **Surveillance anomalies**: the same accuracy as Gemini 3.8 Flash (95%), 11× faster.
+- **Sounds** (crying baby, glass breaking, siren, alarm...): 100% vs 85% for Gemini on the same 40 clips, 0.05 s vs 3.66 s.
+- **Video stays on the device.** 1.5 GB of weights, no per-call fee.
 
-Reflex-2 is the video and audio sibling of [Reflex-1](https://github.com/matu79go/reflex-1) (text and images, answers a written question with no training). Use Reflex-1 when the judgment is described in words; use Reflex-2 when it is seen or heard, and you can show examples.
+Reflex-2 is the video and audio sibling of [Reflex-1](https://github.com/matu79go/reflex-1) (text and images; answers a written question with no training). Use Reflex-1 when a judgment is described in words; use Reflex-2 when it is seen or heard and you can show examples.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/matu79go/reflex-2/blob/main/notebooks/quickstart.ipynb)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Reflex--2-yellow)](https://huggingface.co/matu79go/Reflex-2)
 
-## At a glance
-
-<p>
-<img src="media/chart_fall_en.png" width="49%" alt="Fall detection: accuracy x speed">
-<img src="media/chart_ucf_en.png" width="49%" alt="Surveillance anomalies: accuracy x speed">
-</p>
-
-| Same 40 clips each | **Reflex-2** | Gemini 3.8 Flash |
-|---|---|---|
-| Fall detection, accuracy (balanced) | **97.5%** | 85.0% |
-| Fall detection, missed falls | **0 of 20** | 6 of 20 |
-| Fall detection, median time per clip | **0.28 s** | 6.95 s |
-| Surveillance anomalies, accuracy (balanced) | 95% | 95% |
-| Surveillance anomalies, median time per clip | **1.4 s** | 16.1 s |
-| Cost per clip | **0 (local)** | $0.007 to $0.023 |
-| Training needed | a few dozen examples, seconds | none |
-
-Reflex-2 measured on one NVIDIA GB10 (ASUS Ascent GX10), one clip at a time. Gemini 3.8 Flash via OpenRouter, network included, thinking set to minimal (it cannot be turned off), given the same frames as images and asked for a 0 to 100 score. Reflex-2's fall numbers come from heads that never saw the person in the clip (leave-one-person-out).
-
 ## Demos
 
-**Fall detection: Reflex-2 vs Gemini 3.8 Flash.** Both see the same frames; a tag appears the moment each answers ([full video](media/race_en.mp4))
+**How fast does it notice that someone fell?** The clock starts at the moment of the fall. Both models judge the same frames (the last 4 s) ([full video](media/race2_en.mp4))
 
-![Fall detection race](media/race_en.gif)
+![Fall detection race](media/race2_en.gif)
 
-**Watching a home camera.** Every 0.5 s Reflex-2 judges the last 4 s; the line is the fall probability and the shaded band is the true fall ([full video](media/fall_en.mp4))
+**Telling sounds apart.** Crying baby and glass breaking; Gemini calls the glass "footsteps" ([full video with sound](media/audio_en.mp4))
+
+![Sound race](media/audio_en.gif)
+
+**Watching a home camera.** The line is the fall probability; the shaded band is the actual fall ([full video](media/fall_en.mp4))
 
 ![Fall detection timeline](media/fall_en.gif)
 
-**Surveillance.** One normal and one abnormal clip from UCF-Crime (face pixelated), with both models' answers and times
+## Results
+
+All comparisons use the same inputs for both models: the same frames, the same 16 kHz audio. Reflex-2 uses heads trained on examples; Gemini 3.8 Flash is untrained, with thinking set to minimal (it cannot be turned off). Reflex-2 measured on one NVIDIA GB10 (ASUS Ascent GX10), Gemini via OpenRouter with network included, one clip at a time.
+
+| Same 40 clips each | Gemini 3.8 Flash | **Reflex-2** |
+|---|---|---|
+| Falls vs daily activities | 85.0% | **97.5%** |
+| Time per judgment (median) | 6.95 s | **0.28 s** |
+| Surveillance: abnormal vs normal | 95% | 95% |
+| Time per judgment (median) | 16.1 s | **1.4 s** |
+| 10 sounds | 85% | **100%** |
+| Time per judgment (median) | 3.66 s | **0.049 s** |
+
+<p>
+<img src="media/chart_fall_en.png" width="32%" alt="Falls: accuracy x speed">
+<img src="media/chart_ucf_en.png" width="32%" alt="Surveillance: accuracy x speed">
+<img src="media/chart_audio_en.png" width="32%" alt="Sound: accuracy x speed">
+</p>
+
+**Time from the fall to the alert** (watching the same clip like a camera; Reflex-2 checks the last 4 s every 0.5 s, Gemini sends the last 4 s again each time it answers)
+
+| Scene | Fall starts | Gemini 3.8 Flash | **Reflex-2** |
+|---|---|---|---|
+| Falls from a chair | 3.4 s | 8.3 s after the fall | **1.9 s after the fall** |
+| Walks and falls | 2.7 s | missed (all 4 answers "normal") | **2.1 s after the fall** |
+| Falls forward | 2.6 s | missed (all 4 answers "normal") | **1.2 s after the fall** |
+| Lies down on a bed (normal) | none | no alert | no alert |
 
 ![Surveillance example](media/surveillance_pair_en.png)
 
-## Results
+## Training is what makes it work
 
-**Fall detection** (GMDCSA24: 4 actors in 3 homes, 79 falls and 81 daily activities; each person held out in turn)
+Raw EmbeddingGemma 2 can only compare a clip with a text description, which is not enough for a judgment. Reflex-2 trains a head from examples. Accuracy on clips and sounds not used for training:
 
-| Examples per class used for training | Balanced accuracy | AUC |
-|---|---|---|
-| none (similarity to "a person falling down") | n/a | 0.836 |
-| 5 | 85.6% | 0.939 |
-| 20 | 93.3% | 0.984 |
-| all (about 60 per class) | **95.7%** | **0.990** |
+| Task | Examples | Training time | Raw EmbeddingGemma 2 | **Reflex-2** |
+|---|---|---|---|---|
+| Falls (people never seen in training) | about 120 | about 1 min | 53.8% | **95.7%** |
+| Surveillance anomalies | 120 | about 3 min | 63.5% | **92.5%** |
+| 10 sounds (ESC-50, official 5 folds) | 320 | about 30 s | 35% | **96.3%** |
+| Voice emotion, 8 classes (speakers never seen) | 1,200 | about 1 min | 14% | **52%** |
 
-**Surveillance anomalies** (UCF-Crime, binary normal vs abnormal; 120 training clips, 110 evaluation clips): AUC 0.978, balanced accuracy 92.5%, 1.4 s per clip (median 75 s of video, 32 frames). The UCF-Crime head is not released, because the dataset is for research use.
-
-**Speed.** One GPU (NVIDIA GB10): 0.30 s for a 7 s clip at 1 frame per second, 2.2 GB of GPU memory. CPU only (4 Arm Cortex-X925 cores): about 11 s per clip, or 7.5 s with `tokens_per_frame=70` and 4 frames (91.3% balanced accuracy). Real-time use needs a GPU or an NPU; phone NPU numbers are not measured yet.
+Training time is embedding the examples on one GPU plus fitting the head (seconds on a CPU). Chance level: 50% for falls and surveillance, 10% for sounds, 12.5% for emotion. The released fall head was trained on all 160 GMDCSA24 clips. The surveillance head is not released, because UCF-Crime is for research use.
 
 ## Install
 
@@ -68,7 +77,7 @@ Reflex-2 measured on one NVIDIA GB10 (ASUS Ascent GX10), one clip at a time. Gem
 pip install -r requirements.txt
 ```
 
-Python 3.10+, PyTorch 2.4+, sentence-transformers 6.1+. The first run downloads `google/embeddinggemma-2` (1.5 GB). A GPU is recommended; CPU works for offline jobs.
+Python 3.10+, PyTorch 2.4+, sentence-transformers 6.1+. The first run downloads `google/embeddinggemma-2` (1.5 GB).
 
 ## Use
 
@@ -86,8 +95,8 @@ rf.watch("camera.mp4", "fall")                  # judge the last 4 s every 0.5 s
 **Train your own judgment** from labelled clips, images or audio files:
 
 ```python
-head = rf.train_head({"fall": ["f1.mp4", "f2.mp4", ...], "normal": ["n1.mp4", "n2.mp4", ...]}, name="my_fall")
-head.save("heads/my_fall.json")
+head = rf.train_head({"glass": ["g1.wav", "g2.wav", ...], "other": ["o1.wav", ...]}, name="glass")
+head.save("heads/glass.json")
 ```
 
 or from the command line:
@@ -96,8 +105,6 @@ or from the command line:
 python scripts/train_head.py --out heads/my_head.json --label fall="clips/fall/*.mp4" --label normal="clips/normal/*.mp4"
 python scripts/watch.py camera.mp4 --head heads/my_head.json --label fall
 ```
-
-**Untrained questions.** `rf.zero_shot(x, {"kitchen": "a kitchen", "street": "a street"})` picks the closest description. It works for "what is this" questions; for reliable judgments, train a head.
 
 **HTTP endpoint** (same request shape as Reflex-1 and Jev):
 
@@ -119,21 +126,20 @@ POST /v1/decisions
 
 ## How it works
 
-1. **Read.** Frames are sampled at 1 per second (up to 32, evenly over the clip) and EmbeddingGemma 2 turns the clip into one 768-d vector.
-2. **Judge.** A head (logistic regression over the vector) returns the probability of each option. Heads are a few hundred kilobytes of JSON.
+1. **Embed.** Frames are sampled at 1 per second (up to 32, evenly over the clip; audio as a 16 kHz waveform) and EmbeddingGemma 2 turns the clip into one 768-d vector. The base weights are unchanged.
+2. **Judge.** A head (a logistic regression over the vector, a few hundred kilobytes) returns the probability of each option. This is the standard linear-probe recipe; what is new is the base model, which reads video and audio and runs on phones.
 3. **Watch.** For a live camera, `watch()` judges the last 4 s (2 frames per second) every 0.5 s.
 
-The base model's weights are not modified. One vector can feed many heads at once (fall, intrusion, smoke...), so adding a judgment costs almost nothing at inference time.
+One vector can feed many heads at once (fall, intrusion, glass breaking...), so adding a judgment costs almost nothing at inference time.
 
-## Limits
+## Notes
 
-- Reflex-2 tells **when** something happens, not **who**: it does not draw boxes around people.
-- Heads are trained per judgment. Without a head, Reflex-2 only does similarity search (weak for judgments such as emotion or falls).
-- It does not read or reason over text instructions. For judgments described in words, use [Reflex-1](https://github.com/matu79go/reflex-1).
-- Evaluations use public datasets (staged falls, YouTube surveillance clips). Accuracy in your setting should be checked on your own footage.
+- Judgments need a head trained on examples; raw EmbeddingGemma 2 does not judge reliably.
+- Reflex-2 tells **when** something happens, not **who**. Combine it with a person detector to locate people.
+- Evaluations use public data (staged falls, surveillance clips, sound effects). For your site, train the head on your own footage.
 
 ## License and credits
 
-Code: Apache 2.0. Base model: Google EmbeddingGemma 2 (Apache 2.0); Reflex-2 is not affiliated with or endorsed by Google. The fall head is trained on GMDCSA24 (Data in Brief, 2024; MIT License). Comparison data: UCF-Crime (Sultani et al. 2018). Gemini 3.8 Flash results were measured by the author through OpenRouter. See `NOTICE`.
+Code: Apache 2.0. Base model: Google EmbeddingGemma 2 (Apache 2.0); Reflex-2 is not affiliated with or endorsed by Google. The fall head is trained on GMDCSA24 (Data in Brief, 2024; MIT License). Comparison data: UCF-Crime (Sultani et al. 2018), ESC-50 (Piczak 2015, CC BY-NC 3.0), RAVDESS (Livingstone and Russo 2018, CC BY-NC-SA 4.0). Gemini 3.8 Flash results were measured by the author through OpenRouter. See `NOTICE`.
 
-Blog post (Japanese and English): suzuki-shoten.dev/jp/projects/reflex-2 (coming soon). Concept: NerveReflex.
+Japanese versions of the demos and charts are in `media/ja/`. Concept: NerveReflex.
